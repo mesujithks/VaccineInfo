@@ -1,0 +1,38 @@
+{
+  "name": "Injecta",
+  "version": "0.0.1",
+  "manifest_version": 2,
+  "description": "Vaccine Availabilty Infomer",
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": true
+  },
+  "content_scripts": [
+	  {
+		"matches": [
+		  "https://*/*",
+		   "http://*/*"
+		],
+		"js": ["jquery.min.js"]
+	  }
+  ],
+  "browser_action": {
+    "default_title": "Inject Vaccine",
+    "default_icon": {
+      "16": "images/icon16.png",
+      "24": "images/icon24.png",
+      "32": "images/icon32.png",
+      "64": "images/icon64.png",
+      "128": "images/icon128.png",
+      "256": "images/icon256.png",
+      "512": "images/icon512.png"
+    }
+  },
+  "permissions": [
+    "https://*/*",
+    "http://*/*",
+    "tabs"
+  ]
+}

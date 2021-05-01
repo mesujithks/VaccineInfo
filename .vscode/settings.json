@@ -1,0 +1,11 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "vaccine_info.sqlite",
+            "database": "${workspaceFolder:MyExtension}/vaccine_info.sqlite"
+        }
+    ],
+    "sqltools.useNodeRuntime": true
+}
