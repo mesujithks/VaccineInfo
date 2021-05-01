@@ -127,3 +127,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+bot_server/vaccine_info.sqlite
