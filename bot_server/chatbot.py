@@ -14,6 +14,8 @@ URL = "https://api.telegram.org/bot{}/".format(TOKEN)
 app = Flask(__name__)
 CORS(app)
 exit_event = threading.Event()
+states = ["Kerala"]
+cities = { "Kerala": ["Ernakulam", "Alappuzha"] }
 
 def get_url(url):
     response = requests.get(url)
@@ -42,18 +44,46 @@ def get_last_update_id(updates):
     return max(update_ids)
 
 
+def build_keyboard(items):
+    keyboard = [[item] for item in items]
+    reply_markup = {"keyboard":keyboard, "one_time_keyboard": True}
+    return json.dumps(reply_markup)
+
 def echo_all(updates, dataBase):
     for update in updates["result"]:
         text = update["message"]["text"]
-        print(text)
+        chat_id = update["message"]["chat"]["id"]
+        username = update["message"]["chat"]["first_name"]
+        if dataBase.check_user_by_chat_id(chat_id) == 0:
+            currentState = None
+        else:
+            currentState = dataBase.get_state_by_chat_id(chat_id)
+
         if text=="/start":
-            chat_id = update["message"]["chat"]["id"]
-            username = update["message"]["chat"]["first_name"]
             if dataBase.check_user_by_chat_id(chat_id) == 0:
                 dataBase.add_user(chat_id, username)
-                send_message("You are subcribed to Vaccine Updates! Thank you " + username + ".", chat_id)
+                msg = "You are subcribed to Vaccine Updates! Thank you {}.\nYou can add your current state and city with the commands /addstate and /addcity".format(username)
+                send_message(msg, chat_id)
             else:
-                send_message("You are alreay subcribed to Vaccine Updates! Thank you " + username + ".", chat_id)
+                msg = "You are alreay subcribed to Vaccine Updates! Thank you {}.\nYou can update your current state and city with the commands /addstate and /addcity".format(username)
+                send_message(msg, chat_id)
+        elif text == "/addstate":
+            keyboard = build_keyboard(states)
+            send_message("Select a state", chat_id, keyboard)
+        elif text in states:
+            dataBase.set_state_by_chat_id(text, chat_id)
+            send_message("State saved", chat_id) 
+        elif text == "/addcity":
+            if currentState != None:
+                keyboard = build_keyboard(cities[currentState])
+                send_message("Select a city", chat_id, keyboard)
+            else:
+                send_message("Select a state first /addstate", chat_id) 
+        elif currentState != None and text in cities[currentState]:
+            dataBase.set_city_by_chat_id(text, chat_id)
+            send_message("City saved", chat_id) 
+        else:
+            send_message("Invalid command", chat_id) 
 
 def get_last_chat_id_and_text(updates):
     num_updates = len(updates["result"])
@@ -65,7 +95,14 @@ def get_last_chat_id_and_text(updates):
 
 def send_message(text, chat_id):
     text = urllib.parse.quote_plus(text)
-    url = URL + "sendMessage?text={}&chat_id={}".format(text, chat_id)
+    url = URL + "sendMessage?text={}&chat_id={}&parse_mode=Markdown".format(text, chat_id)
+    get_url(url)
+
+def send_message(text, chat_id, reply_markup=None):
+    text = urllib.parse.quote_plus(text)
+    url = URL + "sendMessage?text={}&chat_id={}&parse_mode=Markdown".format(text, chat_id)
+    if reply_markup:
+        url += "&reply_markup={}".format(reply_markup)
     get_url(url)
 
 
@@ -81,20 +118,22 @@ def main():
             echo_all(updates, dataBase)
         time.sleep(0.5)
 
+
 @app.route('/API/publish', methods=['POST'])
 def sendMessage():
     dataBaseMain = DBHelper()
     body = request.get_json()
     msg = "*--- Vaccine Available ---*\n\n"
-    for index, item in enumerate(body, start=1):
+    for index, item in enumerate(body['data'], start=1):
         msg = msg + str(index) + ". " + item['location'] + " (Count: " + item['count'] + "), " + item['city'] + "\n\n"
-    telegram_send.send(messages=[msg])
-    for chat_id in dataBaseMain.get_all_chat_id():
+    #telegram_send.send(messages=[msg])
+    for chat_id in dataBaseMain.get_all_chat_id_by_city(body['city']):
         send_message(msg,chat_id)
     return jsonify(
         status="OK",
         message="Information Published"
     )
+
 
 @app.route('/API/notifyAdmin', methods=['POST'])
 def sendExpMessage():

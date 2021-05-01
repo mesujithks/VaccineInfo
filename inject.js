@@ -27,6 +27,7 @@
     }
 
     function sendNotification(count) {
+      let dataObject = {};
       let dataList = [];
       for (let i = 0; i < count; i++) {
         for (let j = 0; j < 7; j++) {
@@ -37,28 +38,34 @@
             var data = {};
             data.location = $($(".center-name-title")[i]).text();
             let temp = $($(".center-name-text")[i]).text().split(",");
+            dataObject.city = temp[0].trim();
             data.city = temp[0].trim();
             data.state = temp[1].trim();
             data.pincode = temp[2].trim();
             data.count = val;
             let arr = dataList.filter((item) => item.location == data.location);
-            if (arr.length == 0) dataList.push(data); else
-            console.log(dataList.indexOf(arr[0]))
+            if (arr.length == 0) {
+              dataList.push(data); 
+            } else if (arr.length == 1) {
+              dataList[dataList.indexOf(arr[0])].count = (Number(count)+Number(dataList[dataList.indexOf(arr[0])].count)).toString();
+            }
           }
         }
       }
-      if (dataList.length > 0)
+      if (dataList.length > 0){
+        dataObject.data = dataList;
         $.ajax({
           type: "POST",
           contentType: "application/json",
           dataType: "application/json",
-          data: JSON.stringify(dataList),
+          data: JSON.stringify(dataObject),
           crossDomain: true,
           url: "http://127.0.0.1:5000//API/publish",
           success: function (res) {
             console.log(res);
           },
         });
+      }
     }
 
     function sendTokenExpNotification() {

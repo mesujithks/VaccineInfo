@@ -27,9 +27,32 @@ class DBHelper:
     def get_all_chat_id(self):
         stmt = "SELECT chat_id FROM users"
         return [x[0] for x in self.conn.execute(stmt)]
+    
+    def get_state_by_chat_id(self, chat_id):
+        stmt = "SELECT user_state FROM users WHERE chat_id = (?)"
+        args = (chat_id,)
+        result = self.conn.execute(stmt, args).fetchall()
+        return result[0][0]
+
+    def set_state_by_chat_id(self, state, chat_id):
+        stmt = "UPDATE users SET user_state = (?) WHERE chat_id = (?)"
+        args = (state, chat_id)
+        self.conn.execute(stmt, args)
+        self.conn.commit()
+
+    def set_city_by_chat_id(self, city, chat_id):
+        stmt = "UPDATE users SET user_city = (?) WHERE chat_id = (?)"
+        args = (city, chat_id)
+        self.conn.execute(stmt, args)
+        self.conn.commit()
 
     def check_user_by_chat_id(self, chat_id):
         stmt = "SELECT count(*) FROM users WHERE chat_id = (?)"
         args = (chat_id,)
         result = self.conn.execute(stmt, args).fetchall()
         return result[0][0]
+
+    def get_all_chat_id_by_city(self, city):
+        stmt = "SELECT chat_id FROM users WHERE user_city = (?)"
+        args = (city,)
+        return [x[0] for x in self.conn.execute(stmt, args)]
