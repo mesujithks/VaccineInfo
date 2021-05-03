@@ -8,13 +8,13 @@ class DBHelper:
         self.conn = sqlite3.connect(dbname)
 
     def setup(self):
-        tblstmt = "CREATE TABLE IF NOT EXISTS users (chat_id integer NOT NULL PRIMARY KEY, user_name text, user_state text, user_city text, user_pincode integer, user_location text)"
+        tblstmt = "CREATE TABLE IF NOT EXISTS users (chat_id integer NOT NULL PRIMARY KEY, user_name text, user_state text, user_city text, user_pincode integer, user_location text, tg_user_id text)"
         self.conn.execute(tblstmt)
         self.conn.commit()
 
-    def add_user(self, chat_id, user_name):
-        stmt = "INSERT INTO users (chat_id, user_name) VALUES (?, ?)"
-        args = (chat_id, user_name)
+    def add_user(self, chat_id, user_name, tg_user_id):
+        stmt = "INSERT INTO users (chat_id, user_name, tg_user_id) VALUES (?, ?, ?)"
+        args = (chat_id, user_name, tg_user_id,)
         self.conn.execute(stmt, args)
         self.conn.commit()
 

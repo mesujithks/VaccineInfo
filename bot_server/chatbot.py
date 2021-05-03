@@ -7,15 +7,25 @@ import time
 import urllib
 import telegram_send
 import threading
+import logging
 
 TOKEN = "1501745118:AAHX9J4n9UoANIY03R4mP2TH11EJPieky2c"
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
+
 
 app = Flask(__name__)
 CORS(app)
 exit_event = threading.Event()
 states = ["Kerala"]
-cities = { "Kerala": ["Ernakulam", "Alappuzha"] }
+cities = { "Kerala": ["Ernakulam", "Alappuzha", "Kottayam", "Idukki", "Kannur", "Kasaragod", "Kollam", "Kozhikode", "Malappuram", "Palakkad", "Pathanamthitta", "Thiruvananthapuram", "Thrissur", "Wayanad"] }
+
+#logging.basicConfig(filename='app.log', encoding='utf-8', level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+log = logging.getLogger("vaccine-logger")
+log.setLevel(logging.DEBUG)
+logFormatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fileHandler = logging.FileHandler("app.log")
+fileHandler.setFormatter(logFormatter)
+log.addHandler(fileHandler)
 
 def get_url(url):
     response = requests.get(url)
@@ -50,10 +60,15 @@ def build_keyboard(items):
     return json.dumps(reply_markup)
 
 def echo_all(updates, dataBase):
+    log.info(updates)
     for update in updates["result"]:
         text = update["message"]["text"]
         chat_id = update["message"]["chat"]["id"]
         username = update["message"]["chat"]["first_name"]
+        if "username" in update["message"]["chat"]:
+            tg_user_id = update["message"]["chat"]["username"]
+        else:
+            tg_user_id = ""
         if dataBase.check_user_by_chat_id(chat_id) == 0:
             currentState = None
         else:
@@ -61,7 +76,7 @@ def echo_all(updates, dataBase):
 
         if text=="/start":
             if dataBase.check_user_by_chat_id(chat_id) == 0:
-                dataBase.add_user(chat_id, username)
+                dataBase.add_user(chat_id, username, tg_user_id)
                 msg = "You are subcribed to Vaccine Updates! Thank you {}.\nYou can add your current state and city with the commands /addstate and /addcity".format(username)
                 send_message(msg, chat_id)
             else:
@@ -123,6 +138,7 @@ def main():
 def sendMessage():
     dataBaseMain = DBHelper()
     body = request.get_json()
+    log.info(body)
     msg = "*--- Vaccine Available ---*\n\n"
     for index, item in enumerate(body['data'], start=1):
         msg = msg + str(index) + ". " + item['location'] + " (Count: " + item['count'] + "), " + item['city'] + "\n\n"
@@ -137,8 +153,13 @@ def sendMessage():
 
 @app.route('/API/notifyAdmin', methods=['POST'])
 def sendExpMessage():
-    telegram_send.send(messages=["Token Timeout! Login again."])
-    return "OK"
+    body = request.get_json()
+    logging.info(body)
+    telegram_send.send(messages=["Token Timeout! Login again. ( " + body['city'] + " )"])
+    return jsonify(
+        status="OK",
+        message="Notified admin"
+    )
 
 if __name__ == '__main__':
     exit_event.set()

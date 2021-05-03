@@ -22,6 +22,8 @@
     /* end */
     document.body.appendChild(script);
 
+    var curentCity = "";
+
     function isExist(list, key) {
       return list.includes(key);
     }
@@ -38,21 +40,23 @@
             var data = {};
             data.location = $($(".center-name-title")[i]).text();
             let temp = $($(".center-name-text")[i]).text().split(",");
-            dataObject.city = temp[0].trim();
             data.city = temp[0].trim();
             data.state = temp[1].trim();
             data.pincode = temp[2].trim();
             data.count = val;
             let arr = dataList.filter((item) => item.location == data.location);
             if (arr.length == 0) {
-              dataList.push(data); 
+              dataList.push(data);
             } else if (arr.length == 1) {
-              dataList[dataList.indexOf(arr[0])].count = (Number(count)+Number(dataList[dataList.indexOf(arr[0])].count)).toString();
+              dataList[dataList.indexOf(arr[0])].count = (
+                Number(count) + Number(dataList[dataList.indexOf(arr[0])].count)
+              ).toString();
             }
           }
         }
       }
-      if (dataList.length > 0){
+      if (dataList.length > 0) {
+        dataObject.city = dataList[0].city;
         dataObject.data = dataList;
         $.ajax({
           type: "POST",
@@ -69,9 +73,13 @@
     }
 
     function sendTokenExpNotification() {
+      let dataObject = {};
+      dataObject.city = curentCity;
       $.ajax({
         type: "POST",
-        dataType: "text",
+        contentType: "application/json",
+        dataType: "application/json",
+        data: JSON.stringify(dataObject),
         crossDomain: true,
         url: "http://127.0.0.1:5000//API/notifyAdmin",
         success: function (res) {
@@ -91,6 +99,11 @@
         console.log(count);
         let tempList = [];
         for (let i = 0; i < count; i++) {
+          if (i == 0)
+            curentCity = $($(".center-name-text")[i])
+              .text()
+              .split(",")[0]
+              .trim();
           for (let j = 0; j < 7; j++) {
             let index = j + i * 7;
             let val = $($(".vaccine-box > a")[index])
@@ -103,6 +116,7 @@
             }
           }
         }
+
         if (
           count > 0 &&
           JSON.stringify(globalList.sort()) != JSON.stringify(tempList.sort())
