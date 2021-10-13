@@ -9,7 +9,7 @@ import telegram_send
 import threading
 import logging
 
-TOKEN = "1501745118:AAHX9J4n9UoANIY03R4mP2TH11EJPieky2c"
+TOKEN = "<your telegram bot token enter here>"
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
 
 
